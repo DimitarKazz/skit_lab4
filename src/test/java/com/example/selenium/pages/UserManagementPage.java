@@ -28,25 +28,27 @@ public class UserManagementPage {
     private final By noRecordsFound = By.xpath(
             "//*[contains(text(),'No Records Found')]");
 
+    // Confirm delete dialog
     private final By deleteConfirmBtn = By.xpath(
             "//button[normalize-space()='Yes, Delete']");
 
     // ---- Add User form ----
-    // User Role — first oxd-select on the form page
+    // User Role — 1st oxd-select on the form
     private final By userRoleDropdown = By.xpath(
             "(//div[contains(@class,'oxd-select-text')])[1]");
 
-    // Status — second oxd-select on the form page
+    // Status — 2nd oxd-select on the form
     private final By statusDropdown = By.xpath(
             "(//div[contains(@class,'oxd-select-text')])[2]");
 
-    // Employee Name autocomplete — wait for form URL before using this
+    // Employee Name autocomplete — has unique placeholder
     private final By employeeNameInput = By.xpath(
             "//input[@placeholder='Type for hints...']");
 
-    // Username — 3rd active input on the Add User form
+    // Username — the only plain oxd-input--active that is NOT the autocomplete
+    // On the Add User form the autocomplete uses a different wrapper, so index [1] is username
     private final By usernameInput = By.xpath(
-            "(//input[contains(@class,'oxd-input--active')])[3]");
+            "//label[normalize-space()='Username']/following::input[1]");
 
     // Password fields
     private final By passwordInput = By.xpath(
@@ -55,14 +57,14 @@ public class UserManagementPage {
     private final By confirmPassInput = By.xpath(
             "(//input[@type='password'])[2]");
 
-    // Save button on form
+    // Save button on the form
     private final By saveButton = By.xpath(
             "//button[normalize-space()='Save']");
 
     // Success toast
     private final By successToast = By.cssSelector(".oxd-toast--success");
 
-    // Validation error messages  — OrangeHRM uses <span> with this class
+    // Validation errors — OrangeHRM renders these as <span>
     private final By validationErrors = By.cssSelector(
             "span.oxd-input-field-error-message");
 
@@ -84,9 +86,9 @@ public class UserManagementPage {
 
     public void clickAdd() {
         wait.until(ExpectedConditions.elementToBeClickable(addButton)).click();
-        // Wait until the Add-User form has loaded (URL changes to saveSystemUser)
+        // Wait for the Add-User form URL
         wait.until(ExpectedConditions.urlContains("saveSystemUser"));
-        // Extra pause for Vue components to render
+        // Wait for the employee autocomplete input to be visible (form is fully rendered)
         wait.until(ExpectedConditions.visibilityOfElementLocated(employeeNameInput));
     }
 
@@ -109,7 +111,6 @@ public class UserManagementPage {
                 ExpectedConditions.elementToBeClickable(employeeNameInput));
         input.clear();
         input.sendKeys(hint);
-        // Wait for autocomplete dropdown
         By suggestion = By.cssSelector(
                 ".oxd-autocomplete-dropdown .oxd-autocomplete-option");
         wait.until(ExpectedConditions.visibilityOfElementLocated(suggestion));
@@ -163,6 +164,8 @@ public class UserManagementPage {
     // -----------------------------------------------------------------------
 
     public void searchByUsername(String username) {
+        // Make sure we are on the list page
+        wait.until(ExpectedConditions.urlContains("viewSystemUsers"));
         WebElement input = wait.until(
                 ExpectedConditions.elementToBeClickable(searchUsernameInput));
         input.clear();
@@ -174,12 +177,14 @@ public class UserManagementPage {
         searchByUsername(username);
         wait.until(ExpectedConditions.visibilityOfElementLocated(tableRows));
 
-        // Delete button is the second button in the actions cell of the matching row
+        // button[1] = trash/delete icon  |  button[2] = pencil/edit icon
         By deleteBtn = By.xpath(
                 "//div[contains(@class,'oxd-table-row')]" +
                 "[.//div[normalize-space()='" + username + "']]" +
-                "//button[2]");
+                "//button[1]");
         wait.until(ExpectedConditions.elementToBeClickable(deleteBtn)).click();
+
+        // Confirm the modal dialog
         wait.until(ExpectedConditions.elementToBeClickable(deleteConfirmBtn)).click();
         wait.until(ExpectedConditions.invisibilityOfElementLocated(deleteConfirmBtn));
     }
@@ -205,7 +210,6 @@ public class UserManagementPage {
     }
 
     public List<WebElement> getValidationErrors() {
-        // Give the form a moment to show errors after clicking Save
         WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(5));
         try {
             shortWait.until(ExpectedConditions.visibilityOfElementLocated(validationErrors));
