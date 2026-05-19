@@ -28,25 +28,23 @@ public class UserManagementPage {
     private final By noRecordsFound = By.xpath(
             "//*[contains(text(),'No Records Found')]");
 
-    // Confirm delete dialog
     private final By deleteConfirmBtn = By.xpath(
             "//button[normalize-space()='Yes, Delete']");
 
     // ---- Add User form ----
-    // User Role — 1st oxd-select on the form
+    // User Role dropdown
     private final By userRoleDropdown = By.xpath(
             "(//div[contains(@class,'oxd-select-text')])[1]");
 
-    // Status — 2nd oxd-select on the form
+    // Status dropdown
     private final By statusDropdown = By.xpath(
             "(//div[contains(@class,'oxd-select-text')])[2]");
 
-    // Employee Name autocomplete — has unique placeholder
+    // Employee Name autocomplete
     private final By employeeNameInput = By.xpath(
             "//input[@placeholder='Type for hints...']");
 
-    // Username — the only plain oxd-input--active that is NOT the autocomplete
-    // On the Add User form the autocomplete uses a different wrapper, so index [1] is username
+    // Username — located via its label
     private final By usernameInput = By.xpath(
             "//label[normalize-space()='Username']/following::input[1]");
 
@@ -57,14 +55,14 @@ public class UserManagementPage {
     private final By confirmPassInput = By.xpath(
             "(//input[@type='password'])[2]");
 
-    // Save button on the form
+    // Save button
     private final By saveButton = By.xpath(
             "//button[normalize-space()='Save']");
 
     // Success toast
     private final By successToast = By.cssSelector(".oxd-toast--success");
 
-    // Validation errors — OrangeHRM renders these as <span>
+    // Validation errors
     private final By validationErrors = By.cssSelector(
             "span.oxd-input-field-error-message");
 
@@ -86,24 +84,34 @@ public class UserManagementPage {
 
     public void clickAdd() {
         wait.until(ExpectedConditions.elementToBeClickable(addButton)).click();
-        // Wait for the Add-User form URL
         wait.until(ExpectedConditions.urlContains("saveSystemUser"));
-        // Wait for the employee autocomplete input to be visible (form is fully rendered)
         wait.until(ExpectedConditions.visibilityOfElementLocated(employeeNameInput));
     }
 
-    public void selectUserRole(String role) {
-        wait.until(ExpectedConditions.elementToBeClickable(userRoleDropdown)).click();
+    /**
+     * Selects an option from an OrangeHRM oxd-select dropdown.
+     * OrangeHRM renders options inside .oxd-select-dropdown as <span> elements.
+     */
+    private void selectFromDropdown(By dropdownLocator, String optionText) {
+        // Click the dropdown to open it
+        wait.until(ExpectedConditions.elementToBeClickable(dropdownLocator)).click();
+        // OrangeHRM dropdown options are in .oxd-select-dropdown > li > span
         By option = By.xpath(
-                "//div[@role='listbox']//span[normalize-space()='" + role + "']");
+                "//div[contains(@class,'oxd-select-dropdown')]" +
+                "//span[normalize-space()='" + optionText + "']");
+        wait.until(ExpectedConditions.visibilityOfElementLocated(option));
         wait.until(ExpectedConditions.elementToBeClickable(option)).click();
+        // Wait for dropdown to close
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(
+                By.cssSelector(".oxd-select-dropdown")));
+    }
+
+    public void selectUserRole(String role) {
+        selectFromDropdown(userRoleDropdown, role);
     }
 
     public void selectStatus(String status) {
-        wait.until(ExpectedConditions.elementToBeClickable(statusDropdown)).click();
-        By option = By.xpath(
-                "//div[@role='listbox']//span[normalize-space()='" + status + "']");
-        wait.until(ExpectedConditions.elementToBeClickable(option)).click();
+        selectFromDropdown(statusDropdown, status);
     }
 
     public void setEmployeeName(String hint) {
@@ -164,7 +172,6 @@ public class UserManagementPage {
     // -----------------------------------------------------------------------
 
     public void searchByUsername(String username) {
-        // Make sure we are on the list page
         wait.until(ExpectedConditions.urlContains("viewSystemUsers"));
         WebElement input = wait.until(
                 ExpectedConditions.elementToBeClickable(searchUsernameInput));
@@ -177,14 +184,12 @@ public class UserManagementPage {
         searchByUsername(username);
         wait.until(ExpectedConditions.visibilityOfElementLocated(tableRows));
 
-        // button[1] = trash/delete icon  |  button[2] = pencil/edit icon
+        // button[1] = trash/delete  |  button[2] = pencil/edit
         By deleteBtn = By.xpath(
                 "//div[contains(@class,'oxd-table-row')]" +
                 "[.//div[normalize-space()='" + username + "']]" +
                 "//button[1]");
         wait.until(ExpectedConditions.elementToBeClickable(deleteBtn)).click();
-
-        // Confirm the modal dialog
         wait.until(ExpectedConditions.elementToBeClickable(deleteConfirmBtn)).click();
         wait.until(ExpectedConditions.invisibilityOfElementLocated(deleteConfirmBtn));
     }
