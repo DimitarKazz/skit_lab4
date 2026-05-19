@@ -15,7 +15,8 @@ class DeleteUserTest extends BaseTest {
     private LoginPage loginPage;
     private UserManagementPage userManagementPage;
 
-    private static final String EXISTING_EMPLOYEE = "Tim";
+    // Real employee from the demo database
+    private static final String EXISTING_EMPLOYEE = "Sam";
 
     @BeforeEach
     void login() {
@@ -64,7 +65,7 @@ class DeleteUserTest extends BaseTest {
     @DisplayName("Delete multiple users one by one")
     void testDeleteMultipleUsers() {
         String username1 = "multi1_" + System.currentTimeMillis();
-        String username2 = "multi2_" + System.currentTimeMillis();
+        String username2 = "multi2_" + (System.currentTimeMillis() + 1);
 
         userManagementPage.addUser("ESS", "Enabled", EXISTING_EMPLOYEE,
                 username1, "Test@12345");

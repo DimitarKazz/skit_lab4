@@ -15,8 +15,8 @@ class AddUserTest extends BaseTest {
     private LoginPage loginPage;
     private UserManagementPage userManagementPage;
 
-    private static final String EXISTING_EMPLOYEE = "Tim";
-    private static final String UNIQUE_USERNAME   = "testuser_" + System.currentTimeMillis();
+    // Real employee from the demo database
+    private static final String EXISTING_EMPLOYEE = "Sam";
 
     @BeforeEach
     void login() {
@@ -31,8 +31,10 @@ class AddUserTest extends BaseTest {
     @Test
     @DisplayName("Successfully add a new ESS user")
     void testAddUserSuccess() {
+        String username = "testuser_" + System.currentTimeMillis();
+
         userManagementPage.addUser("ESS", "Enabled", EXISTING_EMPLOYEE,
-                UNIQUE_USERNAME, "Test@12345");
+                username, "Test@12345");
 
         assertTrue(userManagementPage.isSuccessToastDisplayed(),
                 "Success toast should appear after adding a user");
